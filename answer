@@ -1,0 +1,121 @@
+#include "proj1-person.h"
+#include <fstream>
+#include <iomanip>
+
+// Global constant for the maximum number of Person records
+const int MAX_PERSONS = 25;
+
+int main() {
+    Person thePeople[MAX_PERSONS];               // Array to store Person records
+    Person *referenceToThePeople[MAX_PERSONS];  // Array of pointers to Person records
+
+    int numPersons = 0; // Number of Person records read in
+
+    // Open the file
+    ifstream inFile("people.dat");
+    if (!inFile.is_open()) {
+        cerr << "Error: Could not open the file." << endl;
+        return 1;
+    }
+
+    // Read Person records from the file
+    while (numPersons < MAX_PERSONS && getAPersonFromStream(inFile, &thePeople[numPersons])) {
+        referenceToThePeople[numPersons] = &thePeople[numPersons]; // Set pointers
+        numPersons++;
+    }
+
+    inFile.close();
+
+    if (numPersons == 0) {
+        cout << "No records were read from the file." << endl;
+        return 0;
+    }
+
+    // Sort by age and display the first 5 Persons
+    sortPersonArrayByAge(referenceToThePeople, numPersons);
+    cout << "\nFirst 5 Persons sorted by age:" << endl;
+    for (int i = 0; i < 5 && i < numPersons; i++) {
+        displayAPerson(cout, referenceToThePeople[i]);
+        cout << endl;
+    }
+
+    // Sort by name and display the first 5 Persons
+    sortPersonArrayByName(referenceToThePeople, numPersons);
+    cout << "\nFirst 5 Persons sorted by name:" << endl;
+    for (int i = 0; i < 5 && i < numPersons; i++) {
+        displayAPerson(cout, referenceToThePeople[i]);
+        cout << endl;
+    }
+
+    // Search for a Person by name
+    string nameToFind;
+    while (true) {
+        cout << "\nEnter a name to search for (or 'no more' to quit): ";
+        getline(cin, nameToFind);
+
+        if (nameToFind == "no more") {
+            break;
+        }
+
+        Person *foundPerson = findAPerson(referenceToThePeople, numPersons, nameToFind);
+        if (foundPerson) {
+            cout << "Person found: ";
+            displayAPerson(cout, foundPerson);
+            cout << endl;
+        } else {
+            cout << "Person not found." << endl;
+        }
+    }
+
+    return 0;
+}
+
+// Implementations of the provided functions (assuming they are required):
+istream &getAPersonFromStream(istream &in, Person *person) {
+    string line;
+    if (getline(in, line)) {
+        size_t commaPos = line.find(',');
+        if (commaPos != string::npos) {
+            person->name = line.substr(0, commaPos);
+            person->age = stoi(line.substr(commaPos + 1));
+            return in;
+        }
+    }
+    return in;
+}
+
+void sortPersonArrayByAge(Person **arr, int size) {
+    for (int i = 0; i < size - 1; i++) {
+        int minIndex = i;
+        for (int j = i + 1; j < size; j++) {
+            if (arr[j]->age < arr[minIndex]->age) {
+                minIndex = j;
+            }
+        }
+        swap(arr[i], arr[minIndex]);
+    }
+}
+
+void sortPersonArrayByName(Person **arr, int size) {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (arr[j]->name > arr[j + 1]->name) {
+                swap(arr[j], arr[j + 1]);
+            }
+        }
+    }
+}
+
+Person *findAPerson(Person **arr, int size, string name) {
+    for (int i = 0; i < size; i++) {
+        if (arr[i]->name == name) {
+            return arr[i];
+        }
+    }
+    return nullptr;
+}
+
+void displayAPerson(ostream &out, const Person *person) {
+    out << "Name: " << setw(20) << left << person->name
+        << "Age: " << person->age;
+}
